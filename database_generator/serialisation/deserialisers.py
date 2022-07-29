@@ -132,6 +132,8 @@ class OrganisationDeserialiser(CsvDeserialiser):
           if r[val] != "" and isinstance(r[val], str):
             kwarg_name = self._get_key(val, self.mapping)
             kwarg_dict[kwarg_name] = r[val]
+          else:
+            logging.debug(f"Organisation with name={r['Organisation']} has a malformed or empty field ({val})")
         Organisation.create(kwarg_dict)
         logging.debug(f"Organisation with name={r['Organisation']}, description={r['Description']} created")
       except ValidatorError as ve:
