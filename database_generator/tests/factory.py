@@ -10,7 +10,15 @@ factory = Factory()
 def organisation_factory(faker):
   return {
     'name': faker.name(),
-    'description': faker.text()
+    'description': faker.text(),
+    'address_1': faker.street_address(),
+    'address_2': faker.city(),
+    'city': faker.city(),
+    'postcode': faker.postcode(),
+    'email_office': faker.ascii_company_email(),
+    'email_help': faker.ascii_company_email(),
+    'tel_office': faker.phone_number(),
+    'tel_help': faker.phone_number()
   }
 
 @factory.define(Country)

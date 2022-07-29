@@ -1,40 +1,37 @@
-# not at all finished yet, code here is not refactored and only generates database containing data defined in the data directory
-from config import db
-from models.country import Country
-from models.category import Category
-from models.police_force import PoliceForce
-from models.organisation import Organisation
-import json
+import logging
+import argparse
+from pathlib import Path
+import sys
+from serialisation.deserialisers import CountryDeserialiser, CategoryDeserialiser, PoliceForceDeserialiser, OrganisationDeserialiser
 
-tables = [
-  {
-    'singular': 'category',
-    'plural': 'categories',
-  },
-  {
-    'singular': 'organisation',
-    'plural': 'organisations',
-  }
-]
+parser = argparse.ArgumentParser()
+parser.add_argument(
+  '-v', '--verbose',
+  help="Provides verbose output",
+  action="store_const", dest="loglevel", const=logging.DEBUG,
+  default=logging.INFO
+)
 
-db.delete('delete from countries')
-for t in tables:
-  db.delete(f"delete from {t['plural']}")
+parser.add_argument(
+  '-i', '--input',
+  metavar='/path/to/file',
+  help="The path to the input CSV file",
+  type=Path,
+  required=True
+)
 
-with open('data/country.json', 'r') as cf:
-  countries = json.load(cf)
+args = parser.parse_args()
 
-with open('data/category.json', 'r') as cf:
-  categories = json.load(cf)
+logging.basicConfig(level=args.loglevel, format='%(levelname)s: %(message)s')
 
-with open('data/police_force.json', 'r') as cf:
-  police_forces = json.load(cf)
+csv_file = args.input
+if not csv_file.is_file():
+  logging.critical("Specified CSV file does not exist, quitting now.")
+  sys.exit()
 
-for country in countries:
-  Country.create(name=country)
+for ds in (CountryDeserialiser, CategoryDeserialiser, PoliceForceDeserialiser):
+  d = ds()
+  d.init()
 
-for category in categories:
-  Category.create(name=category['name'], description=category['description'])
-
-for police_force in police_forces:
-  PoliceForce.create(name=police_force['name'], description=police_force['description'])
+od = OrganisationDeserialiser('./data/service_database_v1.csv')
+od.init()
