@@ -56,6 +56,20 @@ You can add the ``-h`` flag for help with flags.
 Creating a SQLite database
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+This has changed from the service mapping tool. *database_generator* makes use of `Orator ORM <https://orator-orm.com/>`_, and therefore requires an initial database migration.
+
 .. code-block:: console
 
-  $ python main.py -i path/to/file.csv -o /path/to/directory
+  $ cd database_generator
+  $ orator --config=config.py migrate
+
+.. note:: 
+  If you'd like to start from scratch (i.e. get the database into the state it was after you ran the above for the first time), you can do this by running ``orator --config=config.py migrate:refresh``.
+
+After migrating the database, the script is run in much the same way that the previous tool was run.
+
+.. code-block:: console
+
+  $ python database_generator/main.py -i path/to/file.csv
+
+The output database file is found at ``database_generator/mapping.db``.
