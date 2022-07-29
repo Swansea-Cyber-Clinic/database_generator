@@ -33,5 +33,5 @@ for ds in (CountryDeserialiser, CategoryDeserialiser, PoliceForceDeserialiser):
   d = ds()
   d.init()
 
-od = OrganisationDeserialiser('./data/service_database_v1.csv')
+od = OrganisationDeserialiser(csv_file)
 od.init()
