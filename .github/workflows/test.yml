@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         if: steps.cache-pipenv.outputs.cache-hit != 'true'
         run: |
-          pipenv install
+          pipenv install --dev
 
       - name: Setup database migration
         run: |
