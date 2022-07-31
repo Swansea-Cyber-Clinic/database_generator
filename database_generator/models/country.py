@@ -4,9 +4,10 @@ from orator_validator import Validator
 
 class Country(Model, Validator):
   __guarded__ = []
+  __touches__ = ['organisations']
 
 class CountryValidation(object):
-  def saving(self, country):
+  def creating(self, country):
     country.validate('name', require=True, data_type=str)
     country.errors()
 

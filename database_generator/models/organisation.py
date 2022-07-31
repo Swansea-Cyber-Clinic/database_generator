@@ -21,7 +21,7 @@ class Organisation(Model, Validator):
     return PoliceForce
 
 class OrganisationValidation(object):
-  def saving(self, organisation):
+  def creating(self, organisation):
     organisation.validate('name', require=True, data_type=str)
     organisation.validate('description', require=True, data_type=str)
     organisation.errors()
