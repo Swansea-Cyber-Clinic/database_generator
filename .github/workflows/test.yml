@@ -1,0 +1,15 @@
+name: Python unittest
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - name: Install dependencies
+        run: |
+          pip install pipenv
+          pipenv sync
+          cd database_generator
+          orator --config=config.py migrate
+          python -m unittest discover tests
