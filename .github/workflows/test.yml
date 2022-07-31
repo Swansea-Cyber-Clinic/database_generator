@@ -26,7 +26,11 @@ jobs:
         run: |
           pipenv install
 
-      - name: Run test suite
+      - name: Setup database migration
         run: |
           cd database_generator
+          pipenv run orator --config=config.py migrate
+
+      - name: Run test suite
+        run: |
           pipenv run python -m unittest discover tests
