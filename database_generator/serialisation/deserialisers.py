@@ -1,4 +1,5 @@
 from orator.orm import Model
+from orator.exceptions.orm import ModelNotFound
 from abc import ABC, abstractmethod
 import json
 from models.country import Country
@@ -98,7 +99,9 @@ class CsvDeserialiser(ABC):
   def _exception_handler(self, exception: Exception, record: str):
     if isinstance(exception, ValidatorError):
       logging.info(f"Problem processing {record}, error: {exception.body}")
-      logging.warning("Data is malformed, read previous traceback, do not use output until you no longer see this error")
+      pass
+    elif isinstance(exception, ModelNotFound):
+      logging.info(f"Invalid data ({record})")
       pass
     pass
 
@@ -123,6 +126,39 @@ class OrganisationDeserialiser(CsvDeserialiser):
       if val == v:
         return k
 
+  def _generate_category_mapping(self, organisation: Organisation, categories: str):
+    if isinstance(categories, str):
+      cat_array = categories.split(', ')
+      for c in cat_array:
+        try:
+          cat = Category.where('name', '=', c).first_or_fail()
+          organisation.categories().save(cat)
+        except ModelNotFound as mnfe:
+          super()._exception_handler(mnfe, f"specified category='{c}' for organisation={organisation.name}")
+          pass
+
+  def _generate_country_mapping(self, organisation: Organisation, countries: str):
+    if isinstance(countries, str):
+      cty_array = countries.split(', ')
+      for c in cty_array:
+        try:
+          cty = Country.where('name', '=', c).first_or_fail()
+          organisation.countries().save(cty)
+        except ModelNotFound as mnfe:
+          super()._exception_handler(mnfe, f"specified country='{c}' for organisation={organisation.name}")
+          pass
+
+  def _generate_police_force_mapping(self, organisation: Organisation, police_forces: str):
+    if isinstance(police_forces, str):
+      pfo_array = police_forces.split(', ')
+      for p in pfo_array:
+        try:
+          pfo = PoliceForce.where('name', '=', p).first_or_fail()
+          organisation.police_forces().save(pfo)
+        except ModelNotFound as mnfe:
+          super()._exception_handler(mnfe, f"specified police force='{p}' for organisation={organisation.name}")
+          pass
+
   def _deserialise(self):
     for _, r in self.dataframe.iterrows():
       try:
@@ -134,7 +170,10 @@ class OrganisationDeserialiser(CsvDeserialiser):
             kwarg_dict[kwarg_name] = r[val]
           else:
             logging.debug(f"Organisation with name={r['Organisation']} has a malformed or empty field ({val})")
-        Organisation.create(kwarg_dict)
+        org = Organisation.create(kwarg_dict)
+        self._generate_category_mapping(org, r['Service_cat'])
+        self._generate_country_mapping(org, r['Coverage'])
+        self._generate_police_force_mapping(org, r['Forces'])
         logging.debug(f"Organisation with name={r['Organisation']}, description={r['Description']} created")
       except ValidatorError as ve:
         super()._exception_handler(ve, f"organisation with name={r['Organisation']}, description={r['Description']}")
