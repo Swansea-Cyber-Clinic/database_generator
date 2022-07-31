@@ -29,7 +29,7 @@ jobs:
       - name: Setup database migration
         run: |
           cd database_generator
-          pipenv run orator --config=config.py migrate
+          pipenv run orator --config=config.py migrate -f
 
       - name: Run test suite
         run: |
