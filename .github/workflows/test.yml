@@ -33,4 +33,5 @@ jobs:
 
       - name: Run test suite
         run: |
+          cd database_generator
           pipenv run python -m unittest discover tests
