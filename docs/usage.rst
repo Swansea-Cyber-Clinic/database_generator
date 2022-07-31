@@ -19,6 +19,7 @@ Instructions for ``pip``
 .. code-block:: console
 
   $ pip install pipenv
+  $ pipenv install
   $ pipenv shell
 
 ``pipenv`` will automatically install dependencies based on the ``Pipfile`` and ``Pipfile.lock``.

@@ -16,6 +16,7 @@ Welcome to database_generator's documentation!
    :caption: Contents:
 
    usage
+   development
 
 
 
