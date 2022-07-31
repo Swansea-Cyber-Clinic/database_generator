@@ -19,6 +19,7 @@ class CreateOrganisationsTable(Migration):
             table.text('tel_office').nullable()
             table.text('email_help').nullable()
             table.text('tel_help').nullable()
+            table.text('web').nullable()
             table.timestamps()
 
     def down(self):

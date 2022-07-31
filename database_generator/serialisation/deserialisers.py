@@ -118,7 +118,8 @@ class OrganisationDeserialiser(CsvDeserialiser):
       'email_office': 'Email_office',
       'email_help': 'Email_help',
       'tel_office': 'Tel_office',
-      'tel_help': 'Tel_help'
+      'tel_help': 'Tel_help',
+      'web': 'Web'
     }
       
   def _get_key(self, val: str, dict: dict):
