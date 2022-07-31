@@ -10,6 +10,7 @@ jobs:
         run: |
           pip install pipenv
           pipenv sync
+          pipenv shell
           cd database_generator
           orator --config=config.py migrate
           python -m unittest discover tests
