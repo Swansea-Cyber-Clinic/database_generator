@@ -1,16 +1,32 @@
+# Based on: https://gist.github.com/alukach/6f3a371e9af600e417aca1b36806ad72
 name: Python unittest
 on: [push, pull_request, workflow_dispatch]
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-      - name: Install dependencies
+      - name: Checkout Git repository
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+      
+      - name: Install pipenv
         run: |
-          pip install pipenv
-          pipenv sync
-          pipenv shell
+          pip install pipenv --upgrade pipenv wheel
+      
+      - id: cache-pipenv
+        uses: actions/cache@v3
+        with:
+          path: ~/.local/share/virtualenvs
+          key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
+      
+      - name: Install dependencies
+        if: steps.cache-pipenv.outputs.cache-hit != 'true'
+        run: |
+          pipenv install
+
+      - name: Run test suite
+        run: |
           cd database_generator
-          orator --config=config.py migrate
-          python -m unittest discover tests
+          pipenv run python -m unittest discover tests
