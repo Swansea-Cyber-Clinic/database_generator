@@ -30,6 +30,7 @@ jobs:
         run: |
           cd database_generator
           pipenv run orator --config=config.py migrate -f
+          pipenv run orator --config=config.py migrate:refresh -f
 
       - name: Run test suite
         run: |
