@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Development &#8212; database_generator 0.1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=01f34227"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Usage" href="usage.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="development">
+<h1>Development<a class="headerlink" href="#development" title="Link to this heading">¶</a></h1>
+<section id="orator">
+<h2>Orator<a class="headerlink" href="#orator" title="Link to this heading">¶</a></h2>
+<p><em>database_generator</em> uses <a class="reference external" href="https://orator-orm.com/">Orator</a> as its <abbr title="Object-Relational Mapper">ORM</abbr>. If you’d like to add functionality to <em>database_generator</em>, you’ll need to do so through Orator. Validation of fields for models is handled through <a class="reference external" href="https://pypi.org/project/orator-validator/">orator-validator</a> and the observer functionality in Orator.</p>
+<section id="adding-a-new-model">
+<h3>Adding a new model<a class="headerlink" href="#adding-a-new-model" title="Link to this heading">¶</a></h3>
+<p>Use the Orator CLI tool to generate a model and associated migration (make sure you run it from the nested <cite>database_generator</cite> folder).</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>orator<span class="w"> </span>make:model<span class="w"> </span>MyModel<span class="w"> </span>-m
+</pre></div>
+</div>
+<p>Add the fields you wish to generate to the generated migration file, changes made to the file are annotated below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">orator.migrations</span> <span class="kn">import</span> <span class="n">Migration</span>
+
+
+<span class="k">class</span> <span class="nc">CreateMyClassTable</span><span class="p">(</span><span class="n">Migration</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">up</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run the migrations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s1">&#39;my_class&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">table</span><span class="p">:</span>
+            <span class="n">table</span><span class="o">.</span><span class="n">increments</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span>
+            <span class="n">table</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span> <span class="c1"># added</span>
+            <span class="n">table</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">)</span> <span class="c1"># added</span>
+            <span class="n">table</span><span class="o">.</span><span class="n">timestamps</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">down</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Revert the migrations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;my_class&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the generated model file, define what fields you’d like to be added when using the <cite>create()</cite> or <cite>new()</cite> methods by adding them to either <cite>__fillable__</cite> or <cite>__guarded__</cite> — you’ll probably want to guard <cite>timestamps</cite> and <cite>id</cite>, and allow all other fields to be fillable (below we have allowed any field to be fillable by setting <cite>__guarded__</cite> to an empty array).</p>
+<p>For validation, import <cite>orator_validator</cite> and create a class for managing validation. You’ll register this class by calling the <cite>observe()</cite> method on the model class (which is inherited from the generic <cite>Model</cite> class). You can add validation to any stage of the lifecycle of Orator models, in general it’s probably easiest to define a <cite>saving</cite> method. The <a class="reference external" href="https://pypi.org/project/orator-validator/">orator-validator</a> documentation provides information on available lifecycle stages. In this case, as we have registered the <cite>MyModelValidation</cite> class by observing it, the code contained in the <cite>saving</cite> method will be run when a save operation is run (i.e. the <cite>create</cite> or <cite>save</cite> methods on <cite>MyModel</cite>).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">orator</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">orator_validator</span> <span class="kn">import</span> <span class="n">Validator</span>
+
+<span class="k">class</span> <span class="nc">MyModel</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="n">Validator</span><span class="p">):</span>
+  <span class="n">__guarded__</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">class</span> <span class="nc">MyModelValidation</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">saving</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">my_model</span><span class="p">):</span>
+    <span class="n">my_model</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="n">require</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">data_type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">my_model</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="n">require</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">data_type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">my_model</span><span class="o">.</span><span class="n">errors</span><span class="p">()</span>
+
+<span class="n">MyModel</span><span class="o">.</span><span class="n">observe</span><span class="p">(</span><span class="n">MyModelValidation</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="testing">
+<h2>Testing<a class="headerlink" href="#testing" title="Link to this heading">¶</a></h2>
+<p>Testing is handled using Python’s inbuilt <cite>unittest</cite> framework. Tests can be created in the <cite>tests</cite> directory. To run all tests, run the following (ensuring you are in the nested <cite>database_generator</cite> directory):</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>-m<span class="w"> </span>unittest<span class="w"> </span>discover<span class="w"> </span>tests
+</pre></div>
+</div>
+</section>
+<section id="documentation">
+<h2>Documentation<a class="headerlink" href="#documentation" title="Link to this heading">¶</a></h2>
+<p>The documentation you are currently reading is created using <a class="reference external" href="https://www.sphinx-doc.org/en/master/">Sphinx</a>. To generate documentation locally, run:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>sphinx-build<span class="w"> </span>docs<span class="w"> </span>docs/_build/html
+</pre></div>
+</div>
+<p>You can also autobuild documentation using <a class="reference external" href="https://pypi.org/project/sphinx-autobuild/">sphinx-autobuild</a> (for example, if you are making changes).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ sphinx-autobuild docs docs/_build/html
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">database_generator</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Development</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#orator">Orator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#testing">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#documentation">Documentation</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="usage.html" title="previous chapter">Usage</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2022, Swansea Cyber Clinic.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/development.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
